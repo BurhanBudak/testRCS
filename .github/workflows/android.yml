@@ -34,12 +34,13 @@ jobs:
 
       - name: Install Android SDK
         run: |
+          mkdir -p $HOME/android-sdk
           wget https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip -O sdk-tools.zip
           unzip -qq sdk-tools.zip -d $HOME/android-sdk
-          echo 'export ANDROID_HOME=$HOME/android-sdk' >> $HOME/.bashrc
-          echo 'export PATH=$PATH:$HOME/android-sdk/tools/bin' >> $HOME/.bashrc
-          echo 'y' | $HOME/android-sdk/tools/bin/sdkmanager --update
-          echo 'y' | $HOME/android-sdk/tools/bin/sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.3" "ndk;21.3.6528147"
+          export ANDROID_HOME=$HOME/android-sdk
+          export PATH=$PATH:$ANDROID_HOME/cmdline-tools/tools/bin:$ANDROID_HOME/platform-tools
+          yes | $ANDROID_HOME/cmdline-tools/tools/bin/sdkmanager --licenses
+          yes | $ANDROID_HOME/cmdline-tools/tools/bin/sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.3" "ndk;21.3.6528147"
 
       - name: Install Rust
         run: |
