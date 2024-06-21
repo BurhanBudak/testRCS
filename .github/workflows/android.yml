@@ -32,20 +32,19 @@ jobs:
           distribution: 'zulu'
           java-version: '11'
 
-      - name: Set up Android SDK
+      - name: Install Android SDK
         run: |
-          choco install android-sdk
-          $Env:ANDROID_SDK_ROOT = "$Env:ProgramFiles(x86)\Android\android-sdk"
-          $Env:PATH += ";$Env:ANDROID_SDK_ROOT\platform-tools"
-          $Env:PATH += ";$Env:ANDROID_SDK_ROOT\tools\bin"
-          sdkmanager --update
-          sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.3" "ndk;21.3.6528147"
+          wget https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip -O sdk-tools.zip
+          unzip -qq sdk-tools.zip -d $HOME/android-sdk
+          echo 'export ANDROID_HOME=$HOME/android-sdk' >> $HOME/.bashrc
+          echo 'export PATH=$PATH:$HOME/android-sdk/tools/bin' >> $HOME/.bashrc
+          echo 'y' | $HOME/android-sdk/tools/bin/sdkmanager --update
+          echo 'y' | $HOME/android-sdk/tools/bin/sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.3" "ndk;21.3.6528147"
 
       - name: Install Rust
         run: |
-          Invoke-WebRequest -Uri https://sh.rustup.rs -OutFile rustup-init.exe
-          Start-Process -FilePath rustup-init.exe -ArgumentList '-y' -NoNewWindow -Wait
-          $Env:Path += ";$Env:USERPROFILE\.cargo\bin"
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          export PATH="$HOME/.cargo/bin:$PATH"
           rustup target add aarch64-linux-android
 
       - name: Set up Node.js
@@ -58,15 +57,15 @@ jobs:
           cd rust-rcs-client
           cargo build --release
         env:
-          CARGO_TARGET_DIR: $env:GITHUB_WORKSPACE\RustyRcs\app\libs
+          CARGO_TARGET_DIR: $GITHUB_WORKSPACE/RustyRcs/app/libs
 
       - name: Build RustyRcs with Gradle
         run: |
-          cd $env:GITHUB_WORKSPACE\RustyRcs
+          cd $GITHUB_WORKSPACE/RustyRcs
           ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v3
         with:
           name: apk
-          path: RustyRcs\app\build\outputs\apk\debug\app-debug.apk
+          path: RustyRcs/app/build/outputs/apk/debug/app-debug.apk
