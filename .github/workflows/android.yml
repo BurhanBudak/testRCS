@@ -37,47 +37,14 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-      - name: Download Android SDK Command-line Tools
+      - name: Set up Android SDK
         run: |
-          mkdir -p $HOME/android-sdk/cmdline-tools
-          cd $HOME/android-sdk/cmdline-tools
-          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O sdk-tools.zip
-          unzip sdk-tools.zip
-          rm sdk-tools.zip
-          mv cmdline-tools latest
-
-      - name: Set up Android SDK environment variables
-        run: |
-          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
-
-      - name: Install Android SDK packages
-        run: |
-          sdkmanager --sdk_root=$HOME/android-sdk --licenses
-          sdkmanager --sdk_root=$HOME/android-sdk "platform-tools" "platforms;android-30" "build-tools;30.0.3" "ndk;21.3.6528147" "system-images;android-30;google_apis;x86_64"
-
-      - name: Set up and run emulator
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 30
-          target: google_apis
-          arch: x86_64
-          profile: pixel_5
-          cores: 2
-          avd-name: test
-          force-avd-creation: true
-          emulator-boot-timeout: 600
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
-          disable-animations: true
-          disable-spellchecker: false
-          disable-linux-hw-accel: auto
-          enable-hw-keyboard: false
-          script: echo "Emulator setup complete."
-        env:
-          JAVA_HOME: /opt/hostedtoolcache/Java_Zulu_jdk/11.0.23-9/x64
-          JAVA_HOME_11_X64: /opt/hostedtoolcache/Java_Zulu_jdk/11.0.23-9/x64
+          choco install android-sdk
+          $Env:ANDROID_SDK_ROOT = "$Env:ProgramFiles(x86)\Android\android-sdk"
+          $Env:PATH += ";$Env:ANDROID_SDK_ROOT\platform-tools"
+          $Env:PATH += ";$Env:ANDROID_SDK_ROOT\tools\bin"
+          sdkmanager --update
+          sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.3" "ndk;21.3.6528147"
 
       - name: Build rust-rcs-client
         run: |
