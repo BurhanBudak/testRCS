@@ -12,36 +12,36 @@ jobs:
 
     steps:
     - name: Checkout RustyRcs repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         path: RustyRcs
 
     - name: Checkout rust-rcs-client repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         repository: Hirohumi/rust-rcs-client
         path: rust-rcs-client
 
     - name: Set up JDK 11
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v3
       with:
-        java-version: 11
+        distribution: 'zulu'
+        java-version: '11'
 
     - name: Set up Android SDK
       run: |
-        sudo apt-get update
-        sudo apt-get install -y openjdk-11-jdk wget unzip
-        wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
-        mkdir -p $HOME/sdk/cmdline-tools
-        unzip -q commandlinetools-linux-8512546_latest.zip -d $HOME/sdk/cmdline-tools
-        yes | $HOME/sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=$HOME/sdk "platform-tools" "platforms;android-30" "build-tools;30.0.3" "ndk;21.3.6528147"
-        echo "export ANDROID_SDK_ROOT=$HOME/sdk" >> $GITHUB_ENV
-        echo "export PATH=$PATH:$HOME/sdk/platform-tools" >> $GITHUB_ENV
+        choco install android-sdk
+        $Env:ANDROID_SDK_ROOT = "$Env:ProgramFiles(x86)\Android\android-sdk"
+        $Env:PATH += ";$Env:ANDROID_SDK_ROOT\platform-tools"
+        $Env:PATH += ";$Env:ANDROID_SDK_ROOT\tools\bin"
+        sdkmanager --update
+        sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.3" "ndk;21.3.6528147"
 
     - name: Install Rust
       run: |
-        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-        source $HOME/.cargo/env
+        Invoke-WebRequest -Uri https://sh.rustup.rs -OutFile rustup-init.exe
+        Start-Process -FilePath rustup-init.exe -ArgumentList '-y' -NoNewWindow -Wait
+        $Env:Path += ";$Env:USERPROFILE\.cargo\bin"
         rustup target add aarch64-linux-android
 
     - name: Build rust-rcs-client
@@ -49,15 +49,15 @@ jobs:
         cd rust-rcs-client
         cargo build --release
       env:
-        CARGO_TARGET_DIR: $GITHUB_WORKSPACE/RustyRcs/app/libs
+        CARGO_TARGET_DIR: $env:GITHUB_WORKSPACE\RustyRcs\app\libs
 
     - name: Build RustyRcs with Gradle
       run: |
-        cd $GITHUB_WORKSPACE/RustyRcs
-        ./gradlew assembleDebug
+        cd $env:GITHUB_WORKSPACE\RustyRcs
+        .\gradlew.bat assembleDebug
 
     - name: Upload APK
       uses: actions/upload-artifact@v3
       with:
         name: apk
-        path: RustyRcs/app/build/outputs/apk/debug/app-debug.apk
+        path: RustyRcs\app\build\outputs\apk\debug\app-debug.apk
