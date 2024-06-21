@@ -14,9 +14,6 @@ jobs:
       matrix:
         node-version: [20]  # List of Node.js versions to test with
 
-    container:
-      image: docker.io/your-dockerhub-username/my-android-image:latest
-
     steps:
       - name: Checkout RustyRcs repository
         uses: actions/checkout@v3
@@ -39,6 +36,21 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
+
+      - name: Set up Android SDK
+        run: |
+          echo "Setting up Android SDK"
+          sudo apt-get update
+          sudo apt-get install -y openjdk-11-jdk wget unzip
+          wget https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip -O sdk-tools.zip
+          mkdir -p $HOME/Library/Android/sdk/cmdline-tools
+          unzip sdk-tools.zip -d $HOME/Library/Android/sdk/cmdline-tools
+          mv $HOME/Library/Android/sdk/cmdline-tools/cmdline-tools $HOME/Library/Android/sdk/cmdline-tools/tools
+          export ANDROID_HOME=$HOME/Library/Android/sdk
+          export PATH=$PATH:$ANDROID_HOME/emulator:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools
+          yes | sdkmanager --licenses
+          sdkmanager --update
+          sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.3" "ndk;21.3.6528147"
 
       - name: Build rust-rcs-client
         run: |
