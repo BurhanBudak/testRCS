@@ -50,8 +50,8 @@ jobs:
         wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
         mkdir -p $HOME/sdk/cmdline-tools
         unzip -q commandlinetools-linux-8512546_latest.zip -d $HOME/sdk/cmdline-tools
+        yes | $HOME/sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=$HOME/sdk "platform-tools" "platforms;android-30" "build-tools;30.0.3" "ndk;21.3.6528147"
         echo "export ANDROID_SDK_ROOT=$HOME/sdk" >> $GITHUB_ENV
-        $HOME/sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=$HOME/sdk "platform-tools" "platforms;android-30" "build-tools;30.0.3" "ndk;21.3.6528147"
         echo "export PATH=$PATH:$HOME/sdk/platform-tools" >> $GITHUB_ENV
 
     - name: Install Rust
@@ -65,7 +65,6 @@ jobs:
         ln -s $GITHUB_WORKSPACE/rust-rcs-core rust-rcs-client/rust-rcs-core
         cd rust-rcs-client
         cargo build --release
-        cargo check --release --message-format short
       env:
         CARGO_TARGET_DIR: $GITHUB_WORKSPACE/RustyRcs/app/libs
 
