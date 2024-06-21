@@ -65,6 +65,7 @@ jobs:
         ln -s $GITHUB_WORKSPACE/rust-rcs-core rust-rcs-client/rust-rcs-core
         cd rust-rcs-client
         cargo build --release
+        cargo check --release --message-format short
       env:
         CARGO_TARGET_DIR: $GITHUB_WORKSPACE/RustyRcs/app/libs
 
