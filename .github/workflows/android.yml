@@ -39,12 +39,19 @@ jobs:
 
       - name: Set up Android SDK
         run: |
-          choco install android-sdk
-          $Env:ANDROID_SDK_ROOT = "$Env:ProgramFiles(x86)\Android\android-sdk"
-          $Env:PATH += ";$Env:ANDROID_SDK_ROOT\platform-tools"
-          $Env:PATH += ";$Env:ANDROID_SDK_ROOT\tools\bin"
-          sdkmanager --update
-          sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.3" "ndk;21.3.6528147"
+          sudo apt-get update
+          sudo apt-get install -y wget unzip openjdk-11-jdk
+          wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
+          mkdir -p $HOME/sdk/cmdline-tools
+          unzip -q commandlinetools-linux-8512546_latest.zip -d $HOME/sdk/cmdline-tools
+          echo "export ANDROID_SDK_ROOT=$HOME/sdk" >> $GITHUB_ENV
+          $HOME/sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=$HOME/sdk "platform-tools" "platforms;android-30" "build-tools;30.0.3" "ndk;21.3.6528147"
+          echo "export PATH=$PATH:$HOME/sdk/platform-tools" >> $GITHUB_ENV
+      - name: Install Rust
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          source $HOME/.cargo/env
+          rustup target add aarch64-linux-android 
 
       - name: Build rust-rcs-client
         run: |
