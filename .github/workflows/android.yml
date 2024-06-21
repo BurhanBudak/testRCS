@@ -12,58 +12,61 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [20]  # Add node version 20 here
+        node-version: [20]
 
     steps:
-    - name: Checkout RustyRcs repository
-      uses: actions/checkout@v3
-      with:
-        path: RustyRcs
+      - name: Checkout RustyRcs repository
+        uses: actions/checkout@v3
+        with:
+          path: RustyRcs
 
-    - name: Checkout rust-rcs-client repository
-      uses: actions/checkout@v3
-      with:
-        repository: Hirohumi/rust-rcs-client
-        path: rust-rcs-client
+      - name: Checkout rust-rcs-client repository
+        uses: actions/checkout@v3
+        with:
+          repository: Hirohumi/rust-rcs-client
+          path: rust-rcs-client
 
-    - name: Set up JDK 11
-      uses: actions/setup-java@v3
-      with:
-        distribution: 'zulu'
-        java-version: '11'
-      
-      
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '11'
 
-    - name: Set up Android SDK
-      run: |
-        choco install android-sdk
-        $Env:ANDROID_SDK_ROOT = "$Env:ProgramFiles(x86)\Android\android-sdk"
-        $Env:PATH += ";$Env:ANDROID_SDK_ROOT\platform-tools"
-        $Env:PATH += ";$Env:ANDROID_SDK_ROOT\tools\bin"
-        sdkmanager --update
-        sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.3" "ndk;21.3.6528147"
+      - name: Set up Android SDK
+        run: |
+          choco install android-sdk
+          $Env:ANDROID_SDK_ROOT = "$Env:ProgramFiles(x86)\Android\android-sdk"
+          $Env:PATH += ";$Env:ANDROID_SDK_ROOT\platform-tools"
+          $Env:PATH += ";$Env:ANDROID_SDK_ROOT\tools\bin"
+          sdkmanager --update
+          sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.3" "ndk;21.3.6528147"
 
-    - name: Install Rust
-      run: |
-        Invoke-WebRequest -Uri https://sh.rustup.rs -OutFile rustup-init.exe
-        Start-Process -FilePath rustup-init.exe -ArgumentList '-y' -NoNewWindow -Wait
-        $Env:Path += ";$Env:USERPROFILE\.cargo\bin"
-        rustup target add aarch64-linux-android
+      - name: Install Rust
+        run: |
+          Invoke-WebRequest -Uri https://sh.rustup.rs -OutFile rustup-init.exe
+          Start-Process -FilePath rustup-init.exe -ArgumentList '-y' -NoNewWindow -Wait
+          $Env:Path += ";$Env:USERPROFILE\.cargo\bin"
+          rustup target add aarch64-linux-android
 
-    - name: Build rust-rcs-client
-      run: |
-        cd rust-rcs-client
-        cargo build --release
-      env:
-        CARGO_TARGET_DIR: $env:GITHUB_WORKSPACE\RustyRcs\app\libs
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
 
-    - name: Build RustyRcs with Gradle
-      run: |
-        cd $env:GITHUB_WORKSPACE\RustyRcs
-        .\gradlew.bat assembleDebug
+      - name: Build rust-rcs-client
+        run: |
+          cd rust-rcs-client
+          cargo build --release
+        env:
+          CARGO_TARGET_DIR: $env:GITHUB_WORKSPACE\RustyRcs\app\libs
 
-    - name: Upload APK
-      uses: actions/upload-artifact@v3
-      with:
-        name: apk
-        path: RustyRcs\app\build\outputs\apk\debug\app-debug.apk
+      - name: Build RustyRcs with Gradle
+        run: |
+          cd $env:GITHUB_WORKSPACE\RustyRcs
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: apk
+          path: RustyRcs\app\build\outputs\apk\debug\app-debug.apk
