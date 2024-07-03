@@ -10,32 +10,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [20]
-
     steps:
-    - name: Checkout RustyRcs repository
+    - name: Checkout code
       uses: actions/checkout@v3
-      with:
-        path: RustyRcs
-
-    - name: Checkout rust-rcs-client repository
-      uses: actions/checkout@v3
-      with:
-        repository: Hirohumi/rust-rcs-client
-        path: rust-rcs-client
-
-    - name: Checkout rust-rcs-core repository
-      uses: actions/checkout@v3
-      with:
-        repository: Hirohumi/rust-rcs-core
-        path: rust-rcs-core
-
-    - name: Set up Node.js
-      uses: actions/setup-node@v2
-      with:
-        node-version: ${{ matrix.node-version }}
 
     - name: Set up JDK 11
       uses: actions/setup-java@v3
@@ -54,27 +31,14 @@ jobs:
         echo "export ANDROID_SDK_ROOT=$HOME/sdk" >> $GITHUB_ENV
         echo "export PATH=$PATH:$HOME/sdk/platform-tools" >> $GITHUB_ENV
 
-    - name: Install Rust
+    - name: Build with Gradle
       run: |
-        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-        source $HOME/.cargo/env
-        rustup target add aarch64-linux-android
-
-    - name: Build rust-rcs-client
-      run: |
-        ln -s $GITHUB_WORKSPACE/rust-rcs-core rust-rcs-client/rust-rcs-core
-        cd rust-rcs-client
-        cargo build --release
-      env:
-        CARGO_TARGET_DIR: $GITHUB_WORKSPACE/RustyRcs/app/libs
-
-    - name: Build RustyRcs with Gradle
-      run: |
-        cd $GITHUB_WORKSPACE/RustyRcs
+        chmod +x ./gradlew
         ./gradlew assembleDebug
 
     - name: Upload APK
       uses: actions/upload-artifact@v3
       with:
         name: apk
-        path: RustyRcs/app/build/outputs/apk/debug/app-debug.apk
+        path: app/build/outputs/apk/debug/app-debug.apk
+
